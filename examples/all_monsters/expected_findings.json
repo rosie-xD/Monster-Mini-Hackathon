@@ -1,0 +1,30 @@
+{
+  "phantom": [
+    "SYNTH_PHANTOM"
+  ],
+  "ghost": [
+    "SYNTH_GHOST"
+  ],
+  "zombie": [
+    "SYNTH_ZOMBIE"
+  ],
+  "vampire": [
+    "SYNTH_VAMPIRE"
+  ],
+  "undead_student": [
+    "SYNTH_UNDEAD"
+  ],
+  "doppelganger": [
+    "SYNTH_TWIN_A",
+    "SYNTH_TWIN_B"
+  ],
+  "werewolf": [
+    "SYNTH_WEREWOLF"
+  ],
+  "web_crawler": [
+    "SYNTH_CRAWLER"
+  ],
+  "shape_shifter": [
+    "SYNTH_SHAPE"
+  ]
+}

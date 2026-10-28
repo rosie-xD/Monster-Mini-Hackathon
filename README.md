@@ -1,95 +1,90 @@
-# Mini Monster Hack — pick your file
+# Mini Monster Hack — one file per monster
 
-**Three standalone Python scripts. One per teammate. No packages to install.**
-Use Python 3.10 or newer (`python3 --version`). You can download just your script
-and run it next to your data, or clone this repository's `monster-detector` branch.
+**Python 3.10+. No packages to install.** Each script runs by itself; download only
+what your teammate needs. Use team copies of the data. No real student records or
+uploaded documents are stored in this repository.
 
-| File | What it finds |
+| Script | What it detects |
 | --- | --- |
-| [ghost.py](ghost.py) | Active in ≥3 of the first 4 Autumn weeks, then a weekly activity average below 10% of the early average |
-| [zombie.py](zombie.py) | Activity lasting more than 3 hours, with no gap longer than 15 minutes |
-| [vampire.py](vampire.py) | More than 21 nighttime-active dates, and more nighttime dates than daytime dates |
+| [zombie.py](zombie.py) | Sequences >3 hours, with no timestamp gap >15 minutes |
+| [phantom.py](phantom.py) | Duplicate recorded activity rows |
+| [ghost.py](ghost.py) | Early engagement followed by a weekly average below 10% |
+| [vampire.py](vampire.py) | >21 nighttime-active dates and more night than daytime dates |
+| [undead_student.py](undead_student.py) | Activity after deregistration |
+| [doppelganger.py](doppelganger.py) | Identical recorded histories; exports both/all matching students |
+| [werewolf.py](werewolf.py) | **Provisional** repeated weekly spikes in Autumn AND Spring |
+| [web_crawler.py](web_crawler.py) | >200 distinct resources within a rolling 12-hour window |
+| [shape_shifter.py](shape_shifter.py) | Dated programme switches; **requires supplementary programme history** |
 
-## Run your file
+## Run your script
 
-Open Terminal in the folder containing your script. Replace the quoted filenames
-with your own files. Both LMS and video activity are required.
-
-```bash
-python3 ghost.py --lms "lms.csv" --video "video.csv.zip" --calendar "calendar.csv"
-```
+Open Terminal beside the script and replace the filenames below with your own:
 
 ```bash
 python3 zombie.py --lms "lms.csv" --video "video.csv.zip"
-```
-
-```bash
+python3 phantom.py --lms "lms.csv" --video "video.csv.zip"
+python3 ghost.py --lms "lms.csv" --video "video.csv.zip" --calendar "calendar.csv"
 python3 vampire.py --lms "lms.csv" --video "video.csv.zip"
+python3 undead_student.py --lms "lms.csv" --video "video.csv.zip" --persons "persons.csv"
+python3 doppelganger.py --lms "lms.csv" --video "video.csv.zip"
+python3 werewolf.py --lms "lms.csv" --video "video.csv.zip" --calendar "calendar.csv"
+python3 web_crawler.py --lms "lms.csv" --video "video.csv.zip"
+python3 shape_shifter.py --programme-history "programme_history.csv" --calendar "calendar.csv"
 ```
 
-CSV and ZIP files work directly. Headers must include `P_ID` and `TIMESTAMP`.
-Ghost also needs `DATE` and the real calendar (`DATE`, `WEEK_NUMBER`, `ACADEMIC_YEAR`).
-Column order doesn't matter. For the split LMS CSV from your Desktop:
+The supplied dictionary/ERD contains **no programme history**. Shape-shifter expects
+supplementary `P_ID,EFFECTIVE_DATE,PROGRAMME_ID` records describing successive
+single-programme assignments. Module/department choices are not a substitute.
+
+CSV or ZIP containing one CSV is supported. For the raw CSV parts made on your Mac:
 
 ```bash
 python3 zombie.py --lms-parts "$HOME/Desktop/"lms_part_* --video "video.csv.zip"
 ```
 
-Include **all parts** from one split of the uncompressed CSV. Do not add headers to
-individual byte parts. Use `python3 zombie.py --help` for additional options.
+All activity scripts accept `--lms-parts` and `--video-parts`. Include every part
+from one split operation; do not add headers to byte parts. Shape-shifter accepts
+`--history-parts` for a split supplementary history CSV. Full CSVs each need headers.
+Use `python3 <script>.py --help` for options; see [RULES.md](RULES.md) for exact
+columns, thresholds, interpretation limits and Werewolf tuning.
 
-## Get your results
+## Results
 
-The script prints its new results folder, such as `results/zombie/<run-id>/`.
-Open **findings.csv** for matching student IDs and **student_evidence.csv** for the
-supporting counts. Zombie also writes **zombie_sequences.csv** with qualifying
-start/end times, duration and largest gap. **run_summary.json** confirms completion.
-A new folder is used each time. Input files are not changed.
+Each run prints a new `results/<monster>/<run-id>/` folder containing:
 
-Each script streams data to a temporary disk database; it does not load all 7 million
-rows into memory. Leave several GB of disk space free. Running all three scripts
-separately reads the data three times. Use complete histories; add `--sample` when
-working on an incomplete extract, and treat those results as provisional.
+- **findings.csv** — monster type and matching P_ID, one row per student.
+- **student_evidence.csv** — the supporting counts or comparisons.
+- **run_summary.json** — completion, assumptions, input scope and counts.
+- Additional evidence files where needed: sequences, duplicate rows, matching groups,
+  spikes or programme changes. Shape-shifter also lists ambiguous records in exceptions.
 
-## Assumptions to know
+Werewolf findings are **provisional candidates**, marked by an extra `Status` column
+in findings, and in evidence and the summary. Vampire defaults to UTC with night `(00:00,05:00]`; use `--timezone
+Europe/London` if organisers intend UK local time. Phantom defaults to all-column
+row equality; optional excluded IDs change that definition. Read [RULES.md](RULES.md)
+before submitting findings.
 
-- **Ghost:** count activity rows, not `INTERACTION_COUNT`. Use all 52 calendar weeks,
-  including weeks with zero activity. Exactly 10% does not qualify.
-- **Zombie:** use observed start timestamps, not summed viewing/interaction durations.
-  Exactly 3 hours fails; exactly 15-minute gaps pass. Both activity sources are combined.
-- **Vampire:** count distinct dates. Night is `(00:00,05:00]`; exactly midnight belongs
-  to the previous daytime date. A date may count as both day and night. Default is UTC;
-  use `--timezone Europe/London` if the organisers intend UK local time. These boundary
-  and timezone interpretations are preserved from the previous version, not a confirmed
-  organiser ruling.
-- Duplicate activity rows are retained. Missing rows can distort all three results.
-  Missing/invalid required fields fail with an error rather than being silently skipped.
+Inputs are never changed. Output directories cannot be reused. Use complete histories;
+`--sample` marks incomplete results provisional. Each script streams to a temporary
+SQLite database rather than loading millions of rows into memory. Leave several GB
+free; full-row comparison/indexing can require much more disk than the input CSV.
+Each standalone run reads the input separately. A 7-million-row benchmark has not
+been run; batch and large-input checks use synthetic records.
 
-## Try it without real data
+## Try it and collaborate
 
-The optional [synthetic examples](examples/synthetic) contain invented students:
-
-```bash
-python3 ghost.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv --calendar examples/synthetic/calendar.csv
-python3 zombie.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv
-python3 vampire.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv
-```
-
-Each finds one corresponding `SYNTH_*` student. Never use the synthetic calendar
-as a replacement for the real event calendar.
-
-## Teamwork and tests
-
-Edit only your monster's file; its detection rule is the first section. Push changes
-on a feature branch and open a PR into **monster-detector**. Keep student data and
-results out of Git. The extra test/example folders are optional for running your file.
+[All-nine synthetic examples](examples/all_monsters/README.md) provide copy-paste
+commands and known findings without real data. The existing [three-monster examples](examples/synthetic)
+also remain available. To test everything:
 
 ```bash
-python3 -m unittest tests.test_scripts.GhostTests -v
-python3 -m unittest tests.test_scripts.ZombieTests -v
-python3 -m unittest tests.test_scripts.VampireTests -v
 python3 -m unittest discover -s tests -v
 ```
 
-The full suite tests each standalone script, CSV/ZIP/split input, threshold boundaries,
-output protection and 100,002 synthetic rows. GitHub Actions runs it on Linux and macOS.
+To test Zombie's rule alone: `python3 -m unittest tests.test_scripts.ZombieTests -v`.
+Tests cover standalone execution, ZIP/byte parts, strict thresholds, false matches,
+rolling-window checks and 100,000+ rows. GitHub Actions runs them on Linux/macOS.
+
+Each teammate edits their monster's file. Use a feature branch and PR into
+**monster-detector**, coordinate rule changes, and keep student data/results out of Git.
+The original Zombie, Ghost and Vampire scripts retain their existing behaviour.

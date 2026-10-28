@@ -25,6 +25,12 @@ jobs:
         run: python -m unittest discover -s tests -t . -v
       - name: Try each standalone script on synthetic data
         run: |
-          python ghost.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv --calendar examples/synthetic/calendar.csv
-          python zombie.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv
-          python vampire.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv
+          python zombie.py --lms examples/all_monsters/lms.csv --video examples/all_monsters/video.csv
+          python phantom.py --lms examples/all_monsters/lms.csv --video examples/all_monsters/video.csv
+          python ghost.py --lms examples/all_monsters/lms.csv --video examples/all_monsters/video.csv --calendar examples/all_monsters/calendar.csv
+          python vampire.py --lms examples/all_monsters/lms.csv --video examples/all_monsters/video.csv
+          python undead_student.py --lms examples/all_monsters/lms.csv --video examples/all_monsters/video.csv --persons examples/all_monsters/persons.csv
+          python doppelganger.py --lms examples/all_monsters/lms.csv --video examples/all_monsters/video.csv
+          python werewolf.py --lms examples/all_monsters/lms.csv --video examples/all_monsters/video.csv --calendar examples/all_monsters/calendar.csv
+          python web_crawler.py --lms examples/all_monsters/lms.csv --video examples/all_monsters/video.csv
+          python shape_shifter.py --programme-history examples/all_monsters/programme_history.csv --calendar examples/all_monsters/calendar.csv

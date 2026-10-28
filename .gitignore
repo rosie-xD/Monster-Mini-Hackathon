@@ -13,3 +13,9 @@ lms_part_*
 !examples/synthetic/lms.csv
 !examples/synthetic/video.csv
 !examples/synthetic/calendar.csv
+# Invented all-nine-monster demo inputs only.
+!examples/all_monsters/lms.csv
+!examples/all_monsters/video.csv
+!examples/all_monsters/calendar.csv
+!examples/all_monsters/persons.csv
+!examples/all_monsters/programme_history.csv
