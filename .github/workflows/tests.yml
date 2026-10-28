@@ -23,9 +23,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Run all tests (synthetic inputs only)
         run: python -m unittest discover -s tests -t . -v
-      - name: Smoke test the documented example command
-        run: >-
-          python detect_monsters.py
-          --lms examples/synthetic/lms.csv
-          --video examples/synthetic/video.csv
-          --calendar examples/synthetic/calendar.csv
+      - name: Try each standalone script on synthetic data
+        run: |
+          python ghost.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv --calendar examples/synthetic/calendar.csv
+          python zombie.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv
+          python vampire.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv

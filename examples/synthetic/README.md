@@ -7,7 +7,9 @@ starting 2 October 2023. It is a **synthetic fixture**, not the real event calen
 Run from the repository root:
 
 ```bash
-python3 detect_monsters.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv --calendar examples/synthetic/calendar.csv
+python3 ghost.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv --calendar examples/synthetic/calendar.csv
+python3 zombie.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv
+python3 vampire.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv
 ```
 
 Expected findings are also saved in [expected_findings.json](expected_findings.json):
@@ -24,7 +26,6 @@ Expected findings are also saved in [expected_findings.json](expected_findings.j
 | SYNTH_VAMPIRE_DAY_TIE | None | 22 nighttime and 22 daytime dates tie |
 | SYNTH_NORMAL | None | One daytime activity row |
 
-Both individual commands and the combined command are tested against these expected
-findings. Results are written outside this folder by default. Use your real calendar
+All three scripts are tested against their corresponding expected findings. Results are written outside this folder by default. Use your real calendar
 and complete team data when you are ready to analyse; do not use this calendar as a
 substitute for the event's calendar.
