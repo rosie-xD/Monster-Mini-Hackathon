@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+data/
+results/
+*.csv
+*.xlsx
+*.zip
+*.sqlite*
+lms_part_*
+.DS_Store
