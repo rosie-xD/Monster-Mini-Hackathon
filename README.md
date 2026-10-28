@@ -1,134 +1,167 @@
-# Mini Monster Hack: Ghost, Zombie and Vampire
+# Mini Monster Hack — three teammates, three detectors
 
-A Python detector for the three behavioural monsters in the supplied Monster Guide.
-It combines LMS and video activity, returns matching `P_ID`s, and saves the numbers
-and sequences behind each result. **Python 3.10+; no third-party packages required.**
+Find Ghost, Zombie and Vampire patterns in LMS + video activity, with evidence for
+each matching student. **Python 3.10+ and its standard library only.** Start with the
+included synthetic data; no real student records are stored in this repository.
 
-## Run on a Mac
-
-Check `python3 --version`. If needed, install a current Python from
-[python.org](https://www.python.org/downloads/). Open Terminal in this repository
-and put your team copies of the data in a `data/` folder. Data and generated results
-are excluded from Git. Replace the filenames below with yours:
-
-```bash
-python3 detect_monsters.py \
-  --lms "data/la_mmh_training_lms_item_activity_by_session_fact.csv" \
-  --video "data/la_mmh_training_video_activity_by_view_fact.csv.zip" \
-  --calendar "data/la_mmh_calendar_dim.csv" \
-  --output results/full
-```
-
-Inputs can be UTF-8 comma-separated CSVs or ZIPs containing one CSV each.
-**Headers are required**; column order does not matter. Export XLSX as CSV first.
-Both activity sources are required. The minimum columns are `P_ID`, `TIMESTAMP`,
-and (when using the calendar) `DATE`. Other columns are not used.
-
-If you used Mac `split -b 25m` on the **uncompressed LMS CSV**:
-
-```bash
-python3 detect_monsters.py \
-  --lms-parts "$HOME/Desktop/"lms_part_* \
-  --video "data/la_mmh_training_video_activity_by_view_fact.csv.zip" \
-  --calendar "data/la_mmh_calendar_dim.csv" \
-  --output results/full
-```
-
-Include **every part** from exactly one split operation. Parts are sorted by filename
-and read as one byte stream, including rows/UTF-8 characters cut in half. Do not add
-headers to byte parts. Missing parts cannot always be detected automatically.
-This option is for split **CSV** bytes, not ZIP pieces. Separate complete CSVs, each
-with headers, can instead be passed together to `--lms` or `--video`. Input files
-must not overlap: supplying the same activity twice counts it twice.
-
-Until you have the calendar, explicitly select only Zombie and Vampire:
-
-```bash
-python3 detect_monsters.py \
-  --lms "data/lms.csv" --video "data/video.csv.zip" \
-  --monsters Zombie Vampire --output results/zombie-vampire
-```
-
-Use a new output directory for each run; existing results are not overwritten.
-Add `--sample` for incomplete extracts to mark outputs provisional. First-N-rows
-samples do not preserve student histories: missing events break Zombie sequences,
-can make students look like Ghosts, and distort Vampire counts. Full histories for
-a selected set of students are more useful than random rows.
-
-## Rules and assumptions
-
-| Monster | Exact rule | Evidence |
+| Teammate area | Code and instructions | Tests |
 | --- | --- | --- |
-| Ghost | Active in ≥3 of weeks 1–4; `later_rows/48 < 0.10*(early_rows/4)` | Active early weeks, row counts, weekly averages and ratio |
-| Zombie | Gaps between consecutive timestamps ≤15 minutes, with total sequence span >180 minutes | Start/end, duration, row count and largest gap |
-| Vampire | Distinct nighttime dates >21 and > distinct daytime dates | Night/day date counts |
+| **Ghost** | [monsters/ghost](monsters/ghost) | [tests/ghost](tests/ghost) |
+| **Zombie** | [monsters/zombie](monsters/zombie) | [tests/zombie](tests/zombie) |
+| **Vampire** | [monsters/vampire](monsters/vampire) | [tests/vampire](tests/vampire) |
 
-**Ghost:** count activity rows, not `INTERACTION_COUNT`. Include zero-activity weeks.
-The dictionary defines academic week 1 as the first Autumn week and 52 weeks per
-year. Use source `DATE` and the calendar's `WEEK_NUMBER`; do not guess term dates.
-The calendar must cover the full selected year, all 52 weeks, without gaps or duplicate
-dates. For multiple years specify `--academic-year 2023` using the exact calendar value.
-Other calendar years are reported as excluded; activity dates absent from the calendar
-fail validation. With a calendar, the selected year scopes all three detectors.
-Without one, Zombie/Vampire use all supplied rows.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for feature branches, pull requests and shared
+code coordination. Integration happens on **`monster-detector`**, not automatically
+on `main`.
 
-**Zombie:** measure continuity of observed activity **start timestamps**, across both
-sources and midnight. Exactly 180 minutes does not qualify; a gap of exactly 15 minutes
-is allowed. Microseconds are preserved. The dictionary describes video playback
-duration and LMS time-before-next-interaction as **summed** values over sessions.
-Those fields do not prove uninterrupted activity or reveal individual interaction
-times, so they are not added to timestamps. Continuity inside one aggregated activity
-row cannot be established by this detector.
+## Get started on macOS
 
-**Vampire:** count dates, not rows/hours/minutes. Follow the guide's literal intervals:
-night **(00:00, 05:00]**, day **(05:00, 24:00]**. Exact midnight counts against the
-previous daytime date; exactly 05:00 counts as night. A date containing both day and
-night activity counts in both sets. This boundary interpretation is recorded in the
-run summary for the team to check with organisers.
+Install Python 3.10 or newer from [python.org](https://www.python.org/downloads/)
+if `python3 --version` is missing or too old. No `pip install` step is needed.
 
-Timestamps ending in `Z` are UTC. Vampire defaults to **UTC** because the provided
-examples use `Z` and the dictionary does not specify local time. If the intended rule
-uses UK local time, add `--timezone Europe/London`. Zombie always measures elapsed
-time; Ghost uses the source `DATE` key. Offset-free timestamps require an explicit
-source timezone, e.g. `--naive-timezone UTC`. Ambiguous/nonexistent local daylight-saving
-times are rejected; supply timestamps with offsets instead.
-
-Duplicate activity rows are preserved, consistent with Ghost's row-count definition.
-They do not increase a Zombie sequence's span or a Vampire's distinct-date counts.
-Students can match multiple monsters. Person/module/resource lookup tables are not
-needed for these three detectors.
-
-## Outputs
-
-- `findings.csv`: `Monster Type,P_ID`, one row per monster/student finding. Check the
-  event's manual-combined template before pasting.
-- `student_evidence.csv`: metrics for each student with included activity. Unselected
-  detectors are `not run`; unavailable Ghost metrics are blank.
-- `zombie_sequences.csv`: qualifying sequences and evidence, timestamps in UTC.
-- `run_summary.json`: completion status, input paths, counts, scope, rules, timezone,
-  assumptions and sample status. **Written only on successful completion.**
-
-Source files are never changed. Malformed rows or invalid required values fail with
-a file/line error rather than being silently skipped. Do not use partial outputs from
-a failed run. Students without activity cannot satisfy these rules and are omitted.
-Input completeness cannot be determined automatically.
-
-## Large files
-
-Rows stream in batches of 50,000 into a temporary SQLite database, indexed by student
-and timestamp, then processed one student at a time. The SQLite page cache is 64 MiB
-(not a total process memory cap). Sorting uses disk. Leave several GB free for a
-660 MB dataset; storage and runtime depend on the data and disk speed. Progress is
-printed every 500,000 rows. The database is removed on normal exit, including handled
-errors; a crash may leave a temporary `monster-*` directory inside the output folder.
-
-## Tests
+For a new checkout:
 
 ```bash
-python3 -m unittest discover -s tests -v
+git clone --branch monster-detector https://github.com/rosie-xD/Monster-Mini-Hackathon.git
+cd Monster-Mini-Hackathon
+python3 --version
 ```
 
-Synthetic tests cover thresholds, combined sources, shuffled rows, zero-activity
-weeks, timezones, ZIPs, CSV byte parts and invalid inputs. No uploaded student data
-is bundled or used by the tests. Passing tests verifies the documented rules, not
-accuracy against the organisers' hidden labels.
+If you already cloned it, use that checkout, preserve any local changes, and run:
+
+```bash
+git fetch origin
+git switch monster-detector
+git pull --ff-only origin monster-detector
+```
+
+Run every command below **from the repository root**.
+
+## Try your own monster
+
+These commands use only the small committed synthetic fixtures. Each detector has
+its own entry point and can be tested independently.
+
+**Ghost**
+
+```bash
+python3 -m monsters.ghost --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv --calendar examples/synthetic/calendar.csv
+python3 -m unittest discover -s tests/ghost -t . -v
+```
+
+**Zombie**
+
+```bash
+python3 -m monsters.zombie --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv
+python3 -m unittest discover -s tests/zombie -t . -v
+```
+
+**Vampire**
+
+```bash
+python3 -m monsters.vampire --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv
+python3 -m unittest discover -s tests/vampire -t . -v
+```
+
+Each example finds one corresponding `SYNTH_*` student. See the
+[example explanation and expected findings](examples/synthetic/README.md).
+
+## Run all three and test everything
+
+```bash
+python3 detect_monsters.py --lms examples/synthetic/lms.csv --video examples/synthetic/video.csv --calendar examples/synthetic/calendar.csv
+python3 -m unittest discover -s tests -t . -v
+```
+
+The combined command loads each input once, creates one disk index, and sends a
+single sorted stream to the selected detectors. To select a subset with the original
+CLI, add `--monsters Zombie Vampire`. Unselected detectors do not run.
+
+GitHub Actions runs the tests on pushes and pull requests, using Python 3.10 and
+3.13 on Linux and macOS. The tests cover rule boundaries, individual/combined parity,
+ZIPs, split CSVs, malformed inputs, output isolation and a 100,002-row synthetic case.
+They do not establish accuracy against hidden event labels or benchmark 7 million rows.
+
+## Use your team copies when ready
+
+Place actual files in the ignored `data/` folder and replace the example paths:
+
+```bash
+python3 detect_monsters.py \
+  --lms "data/lms.csv" \
+  --video "data/video.csv.zip" \
+  --calendar "data/calendar.csv"
+```
+
+Or use just your module, e.g. `python3 -m monsters.zombie --lms "data/lms.csv"
+--video "data/video.csv.zip"` as one line. CSVs, single-CSV ZIPs and raw CSV byte
+parts are supported. For the LMS parts made by the Mac `split` command:
+
+```bash
+python3 -m monsters.zombie --lms-parts "$HOME/Desktop/"lms_part_* --video "data/video.csv.zip"
+```
+
+All parts must come from the same uncompressed CSV and be present. The original
+header is required once across the byte stream. For multiple complete CSV files,
+each must have headers and should be passed to `--lms` or `--video` instead.
+
+Ghost requires the **real complete calendar**, including academic weeks 1–52. Zombie
+and Vampire do not require a calendar, but supplying one scopes them to the selected
+academic year too. For multiple calendar years add `--academic-year 2023`. For
+incomplete extracts add `--sample`; missing histories can invalidate conclusions.
+
+See [detailed inputs, rules and outputs](docs/INPUTS_AND_RULES.md) for validation,
+CSV formats, large-file storage requirements and interpretation limits.
+
+## Results and rules
+
+Every run prints a unique output folder:
+
+```text
+results/ghost/<run-id>/
+results/zombie/<run-id>/
+results/vampire/<run-id>/
+results/all/<run-id>/
+```
+
+Use `--output results/your-new-folder` if desired. The specified directory must not
+already exist, even if empty. Each run reserves its folder atomically, so teammates
+and simultaneous runs cannot overwrite one another's files.
+
+- **findings.csv**: `Monster Type,P_ID`, one finding per student/monster pair.
+- **student_evidence.csv**: row counts and detector metrics. Unselected flags are
+  `not run` and their metrics are blank; IDs and columns are consistent across runs.
+- **zombie_sequences.csv**: matching start/end sequences in UTC (header-only when
+  Zombie is not selected).
+- **run_summary.json**: completion, scope, timezone, inputs, assumptions and totals.
+  Only a successful run writes this file; disregard partial files from failed runs.
+
+| Monster | Rule |
+| --- | --- |
+| Ghost | Active in ≥3 of the first 4 Autumn weeks; later rows/48 < 10% of early rows/4, including zero-activity weeks |
+| Zombie | Combined timestamp sequence >3 hours, with all consecutive gaps ≤15 minutes |
+| Vampire | >21 distinct nighttime dates and more nighttime dates than daytime dates |
+
+Vampire preserves the existing **UTC** default and intervals: night `(00:00,05:00]`,
+day `(05:00,24:00]`; midnight is assigned to the previous daytime date. These timezone
+and boundary interpretations need organiser confirmation; use `--timezone
+Europe/London` if UK local time is intended. Zombie uses observed start timestamps,
+not aggregate playback or interaction-duration totals. No rule interpretation has
+been silently changed in this refactor.
+
+## Repository map
+
+```text
+monsters/{ghost,zombie,vampire}/  Independent detector, CLI entry point, README
+shared/                         Loading, calendar, time handling, pipeline, outputs, CLI
+tests/{ghost,zombie,vampire}/    Independent rule tests
+tests/integration/              Original regression tests and pipeline/CLI tests
+examples/synthetic/             Small invented CSVs and expected findings
+docs/INPUTS_AND_RULES.md         Detailed input and interpretation notes
+CONTRIBUTING.md                 Team workflow and shared interfaces
+.github/workflows/tests.yml     Automated tests on pushes and pull requests
+detect_monsters.py              Backward-compatible combined entry point
+```
+
+Keep actual student data, uploaded documents and results out of Git. Only the
+explicitly generated synthetic fixture CSVs are exempted from the data ignore rules.

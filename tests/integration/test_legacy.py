@@ -10,11 +10,11 @@ from datetime import date, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from detect_monsters import (InputError, MINUTE, classify_student, csv_stream,
                              load_calendar, timestamp_us)
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 UTC = ZoneInfo("UTC")
 
 

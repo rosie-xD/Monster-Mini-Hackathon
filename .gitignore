@@ -9,3 +9,7 @@ results/
 *.sqlite*
 lms_part_*
 .DS_Store
+# Only these deliberately generated synthetic CSV fixtures belong in Git.
+!examples/synthetic/lms.csv
+!examples/synthetic/video.csv
+!examples/synthetic/calendar.csv

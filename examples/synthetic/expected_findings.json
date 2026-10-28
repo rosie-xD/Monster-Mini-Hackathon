@@ -1,0 +1,14 @@
+[
+  {
+    "Monster Type": "Ghost",
+    "P_ID": "SYNTH_GHOST"
+  },
+  {
+    "Monster Type": "Vampire",
+    "P_ID": "SYNTH_VAMPIRE"
+  },
+  {
+    "Monster Type": "Zombie",
+    "P_ID": "SYNTH_ZOMBIE"
+  }
+]
